@@ -7,6 +7,7 @@ class Task(models.Model):
         ('medium', 'Medium'),
         ('high', 'High'),
     )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField()
     due_date = models.DateField()
