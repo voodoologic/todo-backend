@@ -11,6 +11,17 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
+import environ
+
+# Initialize environment variables
+env = environ.Env(
+    # Set default values and casting
+    DEBUG=(bool, True)
+)
+
+# Read the .env file if it exists
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-774qxnb15y=nk!1)*eqp!qxh3_^3r%-ah8v#(i)n2!=!id)9kb'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,7 +49,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'dkhtodo'
+    'rest_framework.authtoken',
+    'dkhtodo',
+    'django_extensions',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -49,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'dkhtodo.urls'
@@ -78,11 +93,11 @@ WSGI_APPLICATION = 'dkhtodo.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dkhtodo',
-        'USER': 'dkhtodo',
-        'PASSWORD': 'dkhtodo',
-        'HOST': 'localhost',
-        'PORT': '5432'
+        'NAME': env('DB_NAME', default='postgres'),
+        'USER': env('DB_USER', default='dkhtodo'),
+        'PASSWORD': env('DB_PASS', default='dkhtodo'),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
 }
 
@@ -104,19 +119,33 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-# rest_framework settings  
+# rest_framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # Use JWT for Bearer tokens
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework_json_api.renderers.JSONRenderer',  # JSON:API renderer
+        'rest_framework.renderers.JSONRenderer',          # Standard JSON renderer
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework_json_api.parsers.JSONParser',     # JSON:API parser
+        'rest_framework.parsers.JSONParser',             # Standard JSON parser
+        'rest_framework.parsers.FormParser',             # Form parser for x-www-form-urlencoded
+        'rest_framework.parsers.MultiPartParser',        # Optional: For file uploads
+    ],
+    'DEFAULT_METADATA_CLASS': 'rest_framework_json_api.metadata.JSONAPIMetadata',
 }
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200"
+]
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -140,3 +169,7 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+)
+APPEND_SLASH=True
